@@ -1,3 +1,3 @@
 
 def ask_seasnake():
-	print('Hello from SeaSnake')
+	return 'Hello from SeaSnake'

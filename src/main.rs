@@ -1,22 +1,24 @@
-use cpython::{Python, PyResult};
+use std::path::Path;
+use pyo3::types::PyList;
+use pyo3::prelude::*;
 
 fn main() {
-    let gil = Python::acquire_gil();
-
-    ask_seasnake(gil.python()).unwrap();
+    ask_seasnake().unwrap()
 }
 
-fn ask_seasnake(py: Python) -> PyResult<()> {
-    // Hack to add the path for SeaSnake
-    //py.run("import sys", None, None)?;
-    //py.run("sys.path.insert(0, \"build\")", None, None)?;
+fn ask_seasnake() -> PyResult<()> {
+    //let path = Path::new("/Users/kenr/dev/github/kenr/spike-cython-rust/python/build/lib.macosx-13-arm64-cpython-311");
+    let path = Path::new("./python/build/lib.macosx-13-arm64-cpython-311");
+    Python::with_gil(|py| {
+        let syspath: &PyList = py.import("sys")?.getattr("path")?.extract()?;
+        syspath.insert(0, &path)?;
+        //println!("Import path is: {:?}", syspath);
 
-    let sys = py.import("sys");
-    let path = sys?.call(py, "path", cpython::NoArgs, None)?;
+        let seasnake = py.import("seasnake")?;
+        let args = ();
+        let seasnake_reply: String = seasnake.call_method("ask_seasnake", args, None)?.extract()?;
 
-    let seasnake = py.import("seasnake")?;
-    let seasnake_reply: String = seasnake.get(py, "ask_seasnake")?.extract(py)?;
-
-    println!("I just asked the SeaSnake, it said {}", seasnake_reply);
-    Ok(())
+        println!("I just asked the SeaSnake, it replied {}", seasnake_reply);
+        Ok(())
+     })
 }
